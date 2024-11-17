@@ -1,0 +1,26 @@
+Cose da fare:
+carte ✅
+mazzo ---✅
+    -mischiare mazzo ✅
+        -mischiarlo piu volte ✅
+giocatori ---✅
+    -dealer ✅
+    -giocatore ✅
+        -conto ✅
+        -pescare ✅
+        -puntare ✅
+        -raddoppiare ✅
+        -stare ✅
+        -split X
+        -piu giocatori ✅
+gioco ---✅
+    -limite 21 ✅
+    -logica dealer ✅
+        -pesca fino a quando le tue carte fanno almeno 17 ✅
+    -logica di gioco ✅
+        -carte ai giocatori ✅
+        -carte al dealer ✅
+        -azioni giocatori ✅
+        -vittoria o sconfitta ✅
+        -calcolo puntata ✅
+        -puntate ✅
