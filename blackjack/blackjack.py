@@ -2,6 +2,10 @@ from random import *
 #per dare un po di colore
 BLACK = "\033[0;30m"
 RED = "\033[0;31m"
+from random import *
+#per dare un po di colore e aumentare la leggibilità per gli utenti che giocano
+BLACK = "\033[0;30m"
+RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 BROWN = "\033[0;33m"
 BLUE = "\033[0;34m"
@@ -56,7 +60,7 @@ class Persona:
     def __init__(self,nome):
         self.nome = nome
         self.mano = []
-        self.vittoria = False
+
 
     def pesca_persona(self,mazzo): #pesca una carta che poi viene aggiunta alla mano del giocatore o dealer
         self.mano.append(mazzo.pesca())
@@ -89,6 +93,7 @@ class Giocatore(Persona):
         self.crediti = 10000
         self.puntata = 0
         self.blackjack = False
+        self.vittoria = False
 
 
 
@@ -100,11 +105,9 @@ class Giocatore(Persona):
         print(CYAN+"crediti = "+str(self.crediti)+END)
 
     def raddoppia(self): #consente di raddoppiare cioè di raddoppiare la puntata iniziale e pescare una sola singola carta
-        if self.crediti - self.puntata >= self.puntata:
-            self.puntata *= 2
-            return True
-        else:
-            return False
+        self.puntata *= 2
+
+
 
     def split(self): #nel caso si hanno due carte uguali in mano si puo decidere di dividere cioè giocare due mani insieme
         if len(self.mano) == 2 and (self.mano[0].numero == self.mano[1].numero):
@@ -118,7 +121,7 @@ class Giocatore(Persona):
             return None
 
     def vincita(self): #calcola quanto il giocatore abbia vinto o perso
-        if self.blackjack:
+        if self.blackjack: # il blackjack (le prime due carte che si ottengono fanno 21) viena pagato in modo diverso, non 1 a 1 ma 1 a 1.5
             self.crediti += (self.puntata*1.5)
 
         elif self.vittoria:
@@ -144,7 +147,7 @@ class Dealer(Persona):
 #classe del gioco contenente tutte le funzioni necessarie
 class Gioco:
     def __init__(self,numero_giocatori=1):
-        self.mazzo = Mazzo()
+        self.mazzo = Mazzo() #si crea un mazzo qui in modo che tutti i giocatori peschino da un unico mazzo
         self.mazzo.mischia(3)
 
         self.dealer = Dealer("Dealer")
@@ -169,10 +172,11 @@ class Gioco:
             else:
                 print(f"{giocatore} ha finito i crediti, è {RED}fuori dai giochi!{END}")
 
-    def prima_pescata(self): #vengono distribuite 2 carte a ogni giocatore
+    def prima_pescata(self): #vengono distribuite 2 carte a ogni giocatore come da regole
         for giocatore in self.giocatori:
-            giocatore.pesca_persona(self.mazzo)
-            giocatore.pesca_persona(self.mazzo)
+            if giocatore.crediti > 0:
+                giocatore.pesca_persona(self.mazzo)
+                giocatore.pesca_persona(self.mazzo)
 
         self.dealer.pesca_persona(self.mazzo)
         self.dealer.pesca_persona(self.mazzo)
@@ -181,11 +185,15 @@ class Gioco:
         print(f"è il turno del {giocatore.nome}\n---")
         print(f"il dealer ha come carta scoperta il {self.dealer.mano[0]}\n------") #nel gioco il dealer mostra solo una carta
         while True:
-
             print(giocatore)
+            if giocatore.punteggio == 21 and len(giocatore.mano) == 2: #quando un giocatore fa blackjack vince immediatamente e non puo chiedere carta, vale solo se lo si fa con le prime fue carte
+                print(f"{GREEN}{ITALIC}{UNDERLINE}{giocatore.nome} ha fatto Blackjack!!{END}\n---------")
+                giocatore.blackjack = True
+                break
             scelta = input(f"puoi: \n{YELLOW}chiedere carta (C){END}\n{BLUE}stare(S){END}\n{GREEN}raddoppiare(R){END}\n").upper() # il giocatore sceglie l'azione che vuole eseguire
             if scelta == "C":
                 giocatore.pesca_persona(self.mazzo)
+                print(f"{giocatore.nome} ha pescato {giocatore.mano[-1]}")
                 if giocatore.punteggio() > 21: #si vede se il giocatore ha sballato e se quindi ha perso
                     print(f"{giocatore.nome} ha {RED}sballato{END} con un punteggio di {giocatore.punteggio()}")
                     break
@@ -193,10 +201,15 @@ class Gioco:
                 print(f"{giocatore.nome} ha deciso di {BLUE}stare{END}" )
                 break
             elif scelta == "R" and len(giocatore.mano) == 2:
-                print(f"{giocatore.nome} raddoppiare" )
-                giocatore.raddoppia()
-                if giocatore.raddoppia():
+                print(f"{giocatore.nome} raddoppia" )
+
+                if giocatore.crediti >= giocatore.crediti - giocatore.puntata:
+                    giocatore.raddoppia()
                     giocatore.pesca_persona(self.mazzo)
+                    print(f"{giocatore.nome} ha pescato {giocatore.mano[-1]}")
+                    if giocatore.punteggio() > 21:  # si vede se il giocatore ha sballato e se quindi ha perso
+                        print(f"{giocatore.nome} ha {RED}sballato{END} con un punteggio di {giocatore.punteggio()}")
+                        break
                     break
                 else:
                     print("crediti insufficienti")
@@ -226,18 +239,16 @@ class Gioco:
         else:
             for giocatore in self.giocatori:
                 pg = giocatore.punteggio()
+
                 if pg > 21:
                     print(f"{RED}{giocatore.nome} ha sballato con un punteggio di {pg}{END}\n---------")
-
+                    giocatore.vittoria = False
                 elif pg == pv:
                     print(f"{YELLOW}{giocatore.nome} ha pareggiato con il dealer{END}\n---------")
                     giocatore.puntata = 0
                 elif pg > pv:
                     print(f"{GREEN}{giocatore.nome} ha vinto con un punteggio di {pg}{END}\n---------")
                     giocatore.vittoria = True
-                elif pg == 21:
-                    print(f"{GREEN}{ITALIC}{UNDERLINE}{giocatore.nome} ha fatto Blackjack!!{END}\n---------")
-                    giocatore.blackjack = True
                 else:
                     print(f"{RED}{giocatore.nome} ha perso contro il dealer con un punteggio di {pg} contro {pv}{END}\n---------")
 
@@ -252,9 +263,10 @@ class Gioco:
     def azzero_mani(self): #toglie le carte in mano a ogni giocatore e al dealer
         for giocatore in self.giocatori:
             giocatore.mano = []
+            giocatore.puntata = 0
         self.dealer.mano = []
 
-    def logica_turno(self):
+    def logica_turno(self): #svolgimento del turno di gioco, tenuta in considerazione dei crediti del giocatore
         self.puntate()
         self.prima_pescata()
 
@@ -276,9 +288,13 @@ class Gioco:
 
     def inizio(self): #funzione che da inizio al gioco, si possono scegliere diverse modalità
         while True:
-            mod = input("inserire N per giocare ad un numero limitato di round o I per infiniti o X per uscire ").upper()
+            mod = input(f"""inserire: 
+{UNDERLINE}N{END} per giocare ad un numero limitato di round 
+{UNDERLINE}I{END} per infiniti round
+{UNDERLINE}X{END} per uscire 
+{UNDERLINE}R{END} per regole e buone pratiche di gioco\n""").upper()
             if mod== "N":
-                while True:
+                while True: #tenuta in conto degli errori di ingresso degli utenti
                     try:
                         v = int(input("inserire il numero di round che si vuole giocare "))
                         break
@@ -286,6 +302,7 @@ class Gioco:
                         print("il numero di round non valido")
 
                 for i in range(v):
+                    print(f"---------\nRound {i+1}\n---------")
                     self.logica_turno()
                 for j in self.giocatori:
                     print(f"{j.nome} finisce la partita con {j.crediti} crediti!")
@@ -294,8 +311,11 @@ class Gioco:
             elif mod == "I":
                 while True:
                     self.logica_turno()
+                    break
+            elif mod == "X":
+                print("arrivederci!")
                 break
-            else:
+            else: #tenuta in conto degli errori di ingresso degli utenti
                 print("input invalido")
 
 def num_giocatori():
@@ -310,11 +330,3 @@ def num_giocatori():
         except ValueError:
             print("inserire numero intero")
     return d
-
-
-
-
-
-
-
-
