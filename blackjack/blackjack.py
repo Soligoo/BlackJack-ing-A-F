@@ -1,7 +1,4 @@
-from random import *
-#per dare un po di colore
-BLACK = "\033[0;30m"
-RED = "\033[0;31m"
+
 from random import *
 #per dare un po di colore e aumentare la leggibilità per gli utenti che giocano
 BLACK = "\033[0;30m"
