@@ -3,3 +3,4 @@ Cose da fare:
     -implementare lo split
     -rendere il codice un po piu leggibile
     -documentazione un po migliore magari
+    - risolvere i problemi con raddoppia
